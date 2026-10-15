@@ -9,6 +9,10 @@
 
 Institutional-grade quantitative market intelligence terminal focused on National Stock Exchange of India (NSE) listed equities.
 
+## Live Dashboard
+
+You can view the interactive stock analytics dashboard here: **[View Live Dashboard](https://elvaris-task.vercel.app/)**
+
 ---
 
 ## 1. Executive Summary & Objective
