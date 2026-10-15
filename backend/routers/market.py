@@ -94,18 +94,32 @@ def get_market_breadth():
     quotes = _get_all_quotes()
     return calculate_market_breadth(quotes)
 
+
 @router.get("/heatmap", response_model=HeatmapResponse)
-def get_market_heatmap(timeframe: str = Query("1D", pattern="^(1D|5D|1M)$")):
-    """
-    Returns calculated sector heatmap tiles grouped by sector with constituent stock returns.
-    """
-    quotes = _get_all_quotes()
-    sectors = build_heatmap_data(quotes)
+def get_market_heatmap(
+    timeframe: str = Query("1D", pattern="^(1D|5D|1M)$")
+):
+    """Return sector heatmap for the selected trading timeframe."""
+    dfs = market_data_service.get_universe_data()
+
+    quotes = []
+    for sym, df in dfs.items():
+        quote = calculate_stock_quote(sym, df)
+        if quote:
+            quotes.append(quote)
+
+    sectors = build_heatmap_data(
+        quotes,
+        history_by_symbol=dfs,
+        timeframe=timeframe,
+    )
+
     return HeatmapResponse(
         timeframe=timeframe,
         sectors=sectors,
-        timestamp=datetime.now(timezone.utc).isoformat()
+        timestamp=datetime.now(timezone.utc).isoformat(),
     )
+
 
 @router.get("/sectors", response_model=List[SectorPerformance])
 def get_sector_performance():

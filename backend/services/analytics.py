@@ -193,39 +193,70 @@ def calculate_sector_performance(quotes: List[StockQuote]) -> List[SectorPerform
     results.sort(key=lambda s: s.mean_return_pct, reverse=True)
     return results
 
-def build_heatmap_data(quotes: List[StockQuote]) -> List[HeatmapSector]:
+
+def build_heatmap_data(
+    quotes: List[StockQuote],
+    history_by_symbol: Dict[str, pd.DataFrame],
+    timeframe: str = "1D",
+) -> List[HeatmapSector]:
     """
-    Constructs sector heatmap structures with individual stock tiles.
+    Build sector heatmap using returns for the selected trading timeframe.
+    1D = previous session, 5D = five sessions, 1M = 21 sessions.
     """
-    sector_groups: Dict[str, List[StockQuote]] = {}
+    lookback = {"1D": 1, "5D": 5, "1M": 21}.get(timeframe, 1)
+    sector_groups: Dict[str, List[HeatmapStock]] = {}
+
     for q in quotes:
-        if q.sector and q.change_pct is not None and q.latest_close is not None:
-            sector_groups.setdefault(q.sector, []).append(q)
+        df = history_by_symbol.get(q.symbol)
+
+        if df is None or df.empty:
+            continue
+
+        closes = df.sort_index()["Close"].dropna()
+
+        # Need the latest close and the close before the selected period.
+        if len(closes) <= lookback:
+            continue
+
+        latest_close = float(closes.iloc[-1])
+        past_close = float(closes.iloc[-1 - lookback])
+
+        if past_close <= 0:
+            continue
+
+        change_pct = (latest_close - past_close) / past_close * 100.0
+
+        stock = HeatmapStock(
+            symbol=q.symbol,
+            company_name=q.company_name,
+            sector=q.sector,
+            latest_close=round(latest_close, 2),
+            change_pct=round(change_pct, 2),
+            volume=q.volume or 0,
+            relative_volume=q.relative_volume,
+        )
+
+        sector_groups.setdefault(q.sector, []).append(stock)
 
     sectors: List[HeatmapSector] = []
-    for sector, items in sector_groups.items():
-        mean_return = sum(item.change_pct for item in items) / len(items)
-        stocks = [
-            HeatmapStock(
-                symbol=q.symbol,
-                company_name=q.company_name,
-                sector=q.sector,
-                latest_close=q.latest_close,
-                change_pct=q.change_pct,
-                volume=q.volume or 0,
-                relative_volume=q.relative_volume
+
+    for sector, stocks in sector_groups.items():
+        mean_return = sum(s.change_pct for s in stocks) / len(stocks)
+
+        stocks.sort(key=lambda s: abs(s.change_pct), reverse=True)
+
+        sectors.append(
+            HeatmapSector(
+                sector=sector,
+                mean_return_pct=round(mean_return, 2),
+                stocks_count=len(stocks),
+                stocks=stocks,
             )
-            for q in sorted(items, key=lambda x: abs(x.change_pct), reverse=True)
-        ]
-        sectors.append(HeatmapSector(
-            sector=sector,
-            mean_return_pct=round(mean_return, 2),
-            stocks_count=len(stocks),
-            stocks=stocks
-        ))
+        )
 
     sectors.sort(key=lambda s: s.mean_return_pct, reverse=True)
     return sectors
+
 
 def calculate_stock_analytics(symbol: str, df: pd.DataFrame) -> Optional[StockAnalyticsResponse]:
     """
