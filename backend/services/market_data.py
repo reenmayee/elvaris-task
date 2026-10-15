@@ -24,7 +24,7 @@ STOCK_UNIVERSE: List[Dict[str, str]] = [
     {"symbol": "HCLTECH.NS", "name": "HCL Technologies Ltd.", "sector": "Information Technology"},
     {"symbol": "WIPRO.NS", "name": "Wipro Ltd.", "sector": "Information Technology"},
     {"symbol": "TECHM.NS", "name": "Tech Mahindra Ltd.", "sector": "Information Technology"},
-    {"symbol": "LTIM.NS", "name": "LTIMindtree Ltd.", "sector": "Information Technology"},
+    {"symbol": "LTM.NS", "name": "LTIMindtree Ltd.", "sector": "Information Technology"},
     # Energy, Oil & Gas
     {"symbol": "RELIANCE.NS", "name": "Reliance Industries Ltd.", "sector": "Energy"},
     {"symbol": "ONGC.NS", "name": "Oil & Natural Gas Corp Ltd.", "sector": "Energy"},
@@ -72,7 +72,7 @@ STOCK_UNIVERSE: List[Dict[str, str]] = [
     {"symbol": "TITAN.NS", "name": "Titan Company Ltd.", "sector": "Consumer Discretionary"},
     {"symbol": "ASIANPAINT.NS", "name": "Asian Paints Ltd.", "sector": "Consumer Discretionary"},
     {"symbol": "TRENT.NS", "name": "Trent Ltd.", "sector": "Consumer Discretionary"},
-    {"symbol": "ZOMATO.NS", "name": "Zomato Ltd.", "sector": "Consumer Discretionary"},
+    {"symbol": "ETERNAL.NS", "name": "Eternal Ltd.", "sector": "Consumer Discretionary"},
 ]
 
 INDEX_UNIVERSE: List[Dict[str, str]] = [
@@ -280,11 +280,11 @@ class MarketDataService:
 
     def get_last_update_info(self) -> Dict[str, Any]:
         return {
-            "last_successful_update": self._last_successful_update or datetime.now(timezone.utc).isoformat(),
+            "last_successful_update": self._last_successful_update,
             "cached_universe_count": len(self._universe_history_cache),
             "cache_ttl_seconds": self.cache_ttl_seconds,
             "provider": "Yahoo Finance (Historical Daily Data)",
-            "data_mode": "Historical / Delayed"
+            "data_mode": "Historical / Delayed",
         }
 
 # Singleton instance
